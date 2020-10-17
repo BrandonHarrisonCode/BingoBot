@@ -11,6 +11,7 @@ api = Flask(__name__)
 CORS(api)
 options = webdriver.ChromeOptions()
 options.headless = True
+options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
 
 
 @api.route("/")
@@ -20,7 +21,9 @@ def index():
 
 @api.route("/generate")
 def generate_bingo_card():
-    with webdriver.Chrome(options=options) as driver:
+    with webdriver.Chrome(
+        executable_path=os.environ.get("CHROMEDRIVER_PATH"), options=options
+    ) as driver:
         driver.get(generate_html())
         elem = driver.find_element_by_id("bingocard")
         elem.screenshot("screenshot.png")
