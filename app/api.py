@@ -49,9 +49,14 @@ def generate_html():
 
 
 def get_bingo_terms():
-    with open(os.environ.get("TERMS_FILE", "sample_terms.txt"), "r") as in_file:
-        terms = [line.strip() for line in in_file.readlines()]
-        terms = [term for term in terms if term]
+    split_string = ";;;"
+    if "BINGO_TEXT" in os.environ:
+        terms = os.environ["BINGO_TEXT"].split(split_string)
+    else:
+        with open("sample_terms.txt", "r") as in_file:
+            terms = [line.strip() for line in in_file.readlines()]
+            terms = [term for term in terms if term]
+    print(terms)
     return terms
 
 
