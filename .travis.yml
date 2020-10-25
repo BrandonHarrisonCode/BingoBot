@@ -1,0 +1,8 @@
+language: python
+python: "3.8"
+before_install:
+  - pip install pylint black
+cache: pip
+script: 
+  - black --check .
+  - pylint app/api.py

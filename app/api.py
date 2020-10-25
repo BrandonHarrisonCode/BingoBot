@@ -126,7 +126,9 @@ def start_html_doc():
 
 def generate_table(terms):
     """Generates an HTML table representation of the bingo card for terms"""
-    box_contents = terms[:12] + ["Logan is playing The Show (FREE SPACE)"] + terms[12:24]
+    box_contents = (
+        terms[:12] + ["Logan is playing The Show (FREE SPACE)"] + terms[12:24]
+    )
     res = "<table id='bingocard'>\n"
     for i, term in enumerate(box_contents):
         if i % 5 == 0:
