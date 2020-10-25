@@ -12,6 +12,7 @@ api = Flask(__name__)
 CORS(api)
 
 API_KEY = os.environ["API_KEY"]
+BOT_ID = os.environ["BOT_ID"]
 
 options = webdriver.ChromeOptions()
 options.headless = True
@@ -33,7 +34,14 @@ def generate_bingo_card():
         driver.get(generate_html())
         elem = driver.find_element_by_id("bingocard")
         screenshot_data = elem.screenshot_as_png
-    return str(upload_image_to_groupme(screenshot_data))
+    try:
+        image_url = upload_image_to_groupme(screenshot_data)
+        post_image_to_chat(image_url)
+    except RuntimeError as e:
+        if hasattr(e, "message"):
+            return str(e.message)
+        return str(e)
+    return "Success!"
 
 
 def upload_image_to_groupme(screenshot_data):
@@ -45,8 +53,24 @@ def upload_image_to_groupme(screenshot_data):
     result = requests.post(upload_url, data=screenshot_data, headers=headers)
     if not result.ok:
         print(result)
-        return "There was an error while uploading the image."
+        print(result.json())
+        raise RuntimeError("There was an error while uploading the image.")
     return result.json()["payload"]["picture_url"]
+
+
+def post_image_to_chat(image_url):
+    chat_url = "https://api.groupme.com/v3/bots/post"
+    data = {
+        "bot_id": BOT_ID,
+        "picture_url": image_url,
+        "text": "Here's your bingo card!",
+    }
+    print(data)
+    result = requests.post(chat_url, data=data)
+    if not result.ok:
+        print(result)
+        print(result.json())
+        raise RuntimeError("There was an error while posting the image to chat.")
 
 
 def generate_html():
