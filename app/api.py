@@ -3,12 +3,16 @@ from flask_cors import CORS
 import random
 import sys
 import os
+import requests
 from selenium import webdriver
 from PIL import Image
 from io import BytesIO
 
 api = Flask(__name__)
 CORS(api)
+
+API_KEY = os.environ["API_KEY"]
+
 options = webdriver.ChromeOptions()
 options.headless = True
 options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
@@ -28,14 +32,21 @@ def generate_bingo_card():
     ) as driver:
         driver.get(generate_html())
         elem = driver.find_element_by_id("bingocard")
-        elem.screenshot("screenshot.png")
-    upload_image_to_groupme()
-    return "Done!"
+        screenshot_data = elem.screenshot_as_png
+    return str(upload_image_to_groupme(screenshot_data))
 
 
-def upload_image_to_groupme():
-    upload_url = "https://image.groupme.com"
-    pass
+def upload_image_to_groupme(screenshot_data):
+    upload_url = "https://image.groupme.com/pictures"
+    headers = {
+        "X-Access-Token": API_KEY,
+        "Content-Type": "image/png",
+    }
+    result = requests.post(upload_url, data=screenshot_data, headers=headers)
+    if not result.ok:
+        print(result)
+        return "There was an error while uploading the image."
+    return result.json()["payload"]["picture_url"]
 
 
 def generate_html():
@@ -56,7 +67,6 @@ def get_bingo_terms():
         with open("sample_terms.txt", "r") as in_file:
             terms = [line.strip() for line in in_file.readlines()]
             terms = [term for term in terms if term]
-    print(terms)
     return terms
 
 
