@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, make_response
+from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
 import random
 import sys
@@ -21,9 +21,17 @@ options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--no-sandbox")
 
 
-@api.route("/")
+@api.route("/", methods=["GET"])
 def index():
     return "This is the Bingo Bot, how may I help you?"
+
+
+@api.route("/", methods=["POST"])
+def groupme_callback():
+    data = request.get_json()
+    print(request)
+    print(data)
+    return "Processing..."
 
 
 @api.route("/generate")
