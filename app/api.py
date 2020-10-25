@@ -13,6 +13,7 @@ CORS(api)
 
 API_KEY = os.environ["API_KEY"]
 BOT_ID = os.environ["BOT_ID"]
+CALL_PHRASE = os.environ.get("CALL_PHRASE", "Bingo me")
 
 options = webdriver.ChromeOptions()
 options.headless = True
@@ -29,9 +30,9 @@ def index():
 @api.route("/", methods=["POST"])
 def groupme_callback():
     data = request.get_json()
-    print(request)
-    print(data)
-    return "Processing..."
+    if data.get("text", "") == CALL_PHRASE:
+        return generate_bingo_card()
+    return "No data to process."
 
 
 @api.route("/generate")
