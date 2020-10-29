@@ -1,6 +1,7 @@
 """A GroupMe bot to autogenerate bingo cards"""
 import random
 import os
+from datetime import datetime
 import requests
 
 from flask import Flask, request
@@ -31,8 +32,12 @@ def index():
 def groupme_callback():
     """The entry point for GroupMe callbacks"""
     data = request.get_json()
+    current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"Recieved request ({current_time}): {data}")
     if data.get("text", "").lower().strip() == CALL_PHRASE.lower().strip():
+        print("Call phrase recognized, generating bingo card.")
         return generate_bingo_card()
+    print("No call phrase recognized.")
     return "No data to process."
 
 
