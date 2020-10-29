@@ -31,7 +31,7 @@ def index():
 def groupme_callback():
     """The entry point for GroupMe callbacks"""
     data = request.get_json()
-    if data.get("text", "") == CALL_PHRASE:
+    if data.get("text", "").lower().strip() == CALL_PHRASE.lower().strip():
         return generate_bingo_card()
     return "No data to process."
 
