@@ -16,7 +16,7 @@ CORS(api)
 API_KEY = os.environ["API_KEY"]
 BOT_ID = os.environ["BOT_ID"].strip()
 CALL_PHRASE = os.environ.get("CALL_PHRASE", "Bingo me")
-USER_LINK_ID = os.environ.get("USER_LINK_ID", "-1")
+USER_LINK_ID = str(os.environ.get("USER_LINK_ID", "-1"))
 LINK_CALLWORDS = os.environ.get("LINK_CALLWORDS", "send")
 LINK_RESPONSE_TEXT = os.environ.get("LINK_RESPONSE_TEXT", "").split(";")
 GROUP_CALL_DAY_OF_THE_WEEK = int(os.environ.get("GROUP_CALL_DAY_OF_THE_WEEK", 2))
@@ -44,13 +44,11 @@ def groupme_callback():
         print("Call phrase recognized, generating bingo card.")
         return generate_bingo_card()
     local_message_time = timezone("America/Chicago").localize(
-        datetime.fromtimestamp(data.get("created_at", ""))
+        datetime.utcfromtimestamp(data.get("created_at", ""))
     )
     day_of_the_week = local_message_time.weekday()
     print(day_of_the_week)
-    print(USER_LINK_ID)
-    print(data.get("sender_id", ""))
-    print(data.get("sender_id", "") == USER_LINK_ID)
+    print(str(data.get("sender_id", "")) == USER_LINK_ID)
     print(day_of_the_week == GROUP_CALL_DAY_OF_THE_WEEK)
     print(
         any(
@@ -62,7 +60,7 @@ def groupme_callback():
     )
 
     if (
-        data.get("sender_id", "") == USER_LINK_ID
+        str(data.get("sender_id", "")) == USER_LINK_ID
         and day_of_the_week == GROUP_CALL_DAY_OF_THE_WEEK
         and any(
             [
