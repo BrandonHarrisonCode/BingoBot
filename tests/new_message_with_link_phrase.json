@@ -1,0 +1,14 @@
+{
+  "attachments": [],
+  "avatar_url": "https://i.groupme.com/123456789",
+  "created_at": 1616642388,
+  "group_id": "1234567890",
+  "id": "1234567890",
+  "name": "John",
+  "sender_id": "1234567890",
+  "sender_type": "user",
+  "source_guid": "GUID",
+  "system": false,
+  "text": "Send me the link",
+  "user_id": "1234567890"
+}

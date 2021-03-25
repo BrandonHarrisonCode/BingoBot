@@ -2,6 +2,7 @@
 import random
 import os
 from datetime import datetime
+import json
 from pytz import timezone
 import requests
 
@@ -42,7 +43,7 @@ def groupme_callback():
     if data.get("text", "").lower().strip() == CALL_PHRASE.lower().strip():
         print("Call phrase recognized, generating bingo card.")
         return generate_bingo_card()
-    local_message_time = timezone("US/Pacific").localize(
+    local_message_time = timezone("US/Mountain").localize(
         datetime.fromtimestamp(data.get("created_at", ""))
     )
     day_of_the_week = local_message_time.weekday()
@@ -51,13 +52,17 @@ def groupme_callback():
         and day_of_the_week == GROUP_CALL_DAY_OF_THE_WEEK
         and any(
             [
-                callword.lower() in data.get("text", "").lower().strip()
+                callword.lower().strip() in data.get("text", "").lower().strip()
                 for callword in LINK_CALLWORDS.split(",")
             ]
         )
     ):
         print("User asking for link, sending response")
-        return link_response()
+        try:
+            link_response()
+            return "Success: link!"
+        except RuntimeError as exception:
+            return str(exception)
     print("No call phrase recognized.")
     return "No data to process."
 
@@ -76,7 +81,7 @@ def generate_bingo_card():
         post_image_to_chat(image_url)
     except RuntimeError as exception:
         return str(exception)
-    return "Success!"
+    return "Success: photo!"
 
 
 def upload_image_to_groupme(screenshot_data):
@@ -98,26 +103,32 @@ def link_response():
     """Sends a message to the group chat with a random link response"""
     chat_url = "https://api.groupme.com/v3/bots/post"
     random_response = random.choice(LINK_RESPONSE_TEXT)
-    data = {
-        "bot_id": BOT_ID,
-        "text": random_response,
-    }
+    data = json.dumps(
+        {
+            "bot_id": BOT_ID,
+            "text": random_response,
+        }
+    )
     print(data)
     result = requests.post(chat_url, data=data)
     if not result.ok:
         print(result)
         print(result.json())
-        raise RuntimeError("There was an error while posting the image to chat.")
+        raise RuntimeError(
+            "There was an error while posting the link response to chat."
+        )
 
 
 def post_image_to_chat(image_url):
     """Sends a message to the group chat with the bingo card"""
     chat_url = "https://api.groupme.com/v3/bots/post"
-    data = {
-        "bot_id": BOT_ID,
-        "picture_url": image_url,
-        "text": "Here's your bingo card!",
-    }
+    data = json.dumps(
+        {
+            "bot_id": BOT_ID,
+            "picture_url": image_url,
+            "text": "Here's your bingo card!",
+        }
+    )
     print(data)
     result = requests.post(chat_url, data=data)
     if not result.ok:
