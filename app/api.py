@@ -43,9 +43,8 @@ def groupme_callback():
     if data.get("text", "").lower().strip() == CALL_PHRASE.lower().strip():
         print("Call phrase recognized, generating bingo card.")
         return generate_bingo_card()
-    local_message_time = timezone("America/Chicago").localize(
-        datetime.utcfromtimestamp(data.get("created_at", ""))
-    )
+    timestamp = data.get("created_at", "")
+    local_message_time = datetime.fromtimestamp(timestamp, timezone("America/Chicago"))
     day_of_the_week = local_message_time.weekday()
     print(day_of_the_week)
     print(str(data.get("sender_id", "")).strip() == USER_LINK_ID)
