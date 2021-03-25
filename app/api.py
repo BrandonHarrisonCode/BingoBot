@@ -13,7 +13,7 @@ api = Flask(__name__)
 CORS(api)
 
 API_KEY = os.environ["API_KEY"]
-BOT_ID = os.environ["BOT_ID"]
+BOT_ID = os.environ["BOT_ID"].strip()
 CALL_PHRASE = os.environ.get("CALL_PHRASE", "Bingo me")
 USER_LINK_ID = os.environ.get("USER_LINK_ID", "-1")
 LINK_CALLWORDS = os.environ.get("LINK_CALLWORDS", "send")
