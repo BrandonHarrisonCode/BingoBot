@@ -2,6 +2,7 @@
 import random
 import os
 from datetime import datetime
+from pytz import timezone
 import requests
 
 from flask import Flask, request
@@ -14,6 +15,10 @@ CORS(api)
 API_KEY = os.environ["API_KEY"]
 BOT_ID = os.environ["BOT_ID"]
 CALL_PHRASE = os.environ.get("CALL_PHRASE", "Bingo me")
+USER_LINK_ID = os.environ.get("USER_LINK_ID", "-1")
+LINK_CALLWORDS = os.environ.get("LINK_CALLWORDS", "send")
+LINK_RESPONSE_TEXT = os.environ.get("LINK_RESPONSE_TEXT", "").split(";")
+GROUP_CALL_DAY_OF_THE_WEEK = int(os.environ.get("GROUP_CALL_DAY_OF_THE_WEEK", 2))
 
 options = webdriver.ChromeOptions()
 options.headless = True
@@ -37,6 +42,22 @@ def groupme_callback():
     if data.get("text", "").lower().strip() == CALL_PHRASE.lower().strip():
         print("Call phrase recognized, generating bingo card.")
         return generate_bingo_card()
+    local_message_time = timezone("US/Pacific").localize(
+        datetime.fromtimestamp(data.get("created_at", ""))
+    )
+    day_of_the_week = local_message_time.weekday()
+    if (
+        data.get("sender_id", "") == USER_LINK_ID
+        and day_of_the_week == GROUP_CALL_DAY_OF_THE_WEEK
+        and any(
+            [
+                callword.lower() in data.get("text", "").lower().strip()
+                for callword in LINK_CALLWORDS.split(",")
+            ]
+        )
+    ):
+        print("User asking for link, sending response")
+        return link_response()
     print("No call phrase recognized.")
     return "No data to process."
 
@@ -71,6 +92,22 @@ def upload_image_to_groupme(screenshot_data):
         print(result.json())
         raise RuntimeError("There was an error while uploading the image.")
     return result.json()["payload"]["picture_url"]
+
+
+def link_response():
+    """Sends a message to the group chat with a random link response"""
+    chat_url = "https://api.groupme.com/v3/bots/post"
+    random_response = random.choice(LINK_RESPONSE_TEXT)
+    data = {
+        "bot_id": BOT_ID,
+        "text": random_response,
+    }
+    print(data)
+    result = requests.post(chat_url, data=data)
+    if not result.ok:
+        print(result)
+        print(result.json())
+        raise RuntimeError("There was an error while posting the image to chat.")
 
 
 def post_image_to_chat(image_url):
