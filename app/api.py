@@ -46,17 +46,6 @@ def groupme_callback():
     timestamp = data.get("created_at", "")
     local_message_time = datetime.fromtimestamp(timestamp, timezone("America/Chicago"))
     day_of_the_week = local_message_time.weekday()
-    print(day_of_the_week)
-    print(str(data.get("sender_id", "")).strip() == USER_LINK_ID)
-    print(day_of_the_week == GROUP_CALL_DAY_OF_THE_WEEK)
-    print(
-        any(
-            [
-                callword.lower().strip() in data.get("text", "").lower().strip()
-                for callword in LINK_CALLWORDS.split(",")
-            ]
-        )
-    )
 
     if (
         str(data.get("sender_id", "")).strip() == USER_LINK_ID
