@@ -32,6 +32,6 @@ types-MarkupSafe==1.1.6
 types-selenium==3.141.2
 types-Werkzeug==1.0.5
 typing-extensions==3.10.0.0
-urllib3==1.25.10
+urllib3==1.26.5
 Werkzeug==1.0.1
 wrapt==1.12.1
