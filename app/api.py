@@ -76,10 +76,10 @@ def is_link_request(data):
         str(data.get("sender_id", "")).strip() == USER_LINK_ID
         and day_of_the_week == GROUP_CALL_DAY_OF_THE_WEEK
         and any(
-            [
+            (
                 callword.lower().strip() in data.get("text", "").lower().strip()
                 for callword in LINK_CALLWORDS.split(",")
-            ]
+            )
         )
     )
 
@@ -223,7 +223,7 @@ def get_bingo_terms():
     if "BINGO_TEXT" in os.environ:
         terms = os.environ["BINGO_TEXT"].split(split_string)
     else:
-        with open("sample_terms.txt", "r") as in_file:
+        with open("sample_terms.txt", mode="r", encoding="utf-8") as in_file:
             terms = [line.strip() for line in in_file.readlines()]
             terms = [term for term in terms if term]
     return terms
