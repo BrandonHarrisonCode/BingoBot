@@ -7,7 +7,7 @@ from pytz import timezone
 import requests
 
 from flask import Flask, request
-from flask_cors import CORS
+from flask_cors import CORS  # type: ignore
 from selenium import webdriver
 
 api = Flask(__name__)
@@ -20,6 +20,8 @@ USER_LINK_ID = str(os.environ.get("USER_LINK_ID", "-1")).strip()
 LINK_CALLWORDS = os.environ.get("LINK_CALLWORDS", "send")
 LINK_RESPONSE_TEXT = os.environ.get("LINK_RESPONSE_TEXT", "").split(";")
 GROUP_CALL_DAY_OF_THE_WEEK = int(os.environ.get("GROUP_CALL_DAY_OF_THE_WEEK", 2))
+KEEPERS_CALL_PHRASE = os.environ.get("KEEPERS_CALL_PHRASE", "Keepers?")
+KEEPERS_RESPONSE = os.environ.get("KEEPERS_RESPONSE", "Keeper rules.")
 
 options = webdriver.ChromeOptions()
 options.headless = True
@@ -40,14 +42,33 @@ def groupme_callback():
     data = request.get_json()
     current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print(f"Recieved request ({current_time}): {data}")
-    if data.get("text", "").lower().strip() == CALL_PHRASE.lower().strip():
-        print("Call phrase recognized, generating bingo card.")
-        return generate_bingo_card()
+    if is_bingo_request(data):
+        return do_bingo_request()
+    if is_link_request(data):
+        return do_link_request()
+    if is_keeper_request(data):
+        return do_keeper_request()
+    print("No call phrase recognized.")
+    return "No data to process."
+
+
+def is_bingo_request(data):
+    """Returns a boolean describing if the message is a bingo request"""
+    return data.get("text", "").lower().strip() == CALL_PHRASE.lower().strip()
+
+
+def do_bingo_request():
+    """Creates and submits a bingo response"""
+    print("Call phrase recognized, generating bingo card.")
+    return generate_bingo_card()
+
+
+def is_link_request(data):
+    """Returns a boolean describing if the message is a link request"""
     timestamp = data.get("created_at", "")
     local_message_time = datetime.fromtimestamp(timestamp, timezone("America/Chicago"))
     day_of_the_week = local_message_time.weekday()
-
-    if (
+    return (
         str(data.get("sender_id", "")).strip() == USER_LINK_ID
         and day_of_the_week == GROUP_CALL_DAY_OF_THE_WEEK
         and any(
@@ -56,15 +77,34 @@ def groupme_callback():
                 for callword in LINK_CALLWORDS.split(",")
             ]
         )
-    ):
-        print("User asking for link, sending response")
-        try:
-            link_response()
-            return "Success: link!"
-        except RuntimeError as exception:
-            return str(exception)
-    print("No call phrase recognized.")
-    return "No data to process."
+    )
+
+
+def do_link_request():
+    """Creates and submits a link response"""
+    print("User asking for link, sending response")
+    random_response = random.choice(LINK_RESPONSE_TEXT)
+    try:
+        text_response(random_response)
+        return "Success: link!"
+    except RuntimeError as exception:
+        return str(exception)
+
+
+def is_keeper_request(data):
+    """Returns a boolean describing if the message is a keeper request"""
+    return data.get("text", "").lower().strip() == KEEPERS_CALL_PHRASE.lower().strip()
+
+
+def do_keeper_request():
+    """Creates and submits a keeper response"""
+    print("User asking for keeper info, sending response")
+    text = KEEPERS_RESPONSE
+    try:
+        text_response(text)
+        return "Success: link!"
+    except RuntimeError as exception:
+        return str(exception)
 
 
 @api.route("/generate")
@@ -99,14 +139,13 @@ def upload_image_to_groupme(screenshot_data):
     return result.json()["payload"]["picture_url"]
 
 
-def link_response():
-    """Sends a message to the group chat with a random link response"""
+def text_response(text):
+    """Sends a text message to the group chat"""
     chat_url = "https://api.groupme.com/v3/bots/post"
-    random_response = random.choice(LINK_RESPONSE_TEXT)
     data = json.dumps(
         {
             "bot_id": BOT_ID,
-            "text": random_response,
+            "text": text,
         }
     )
     print(data)
@@ -115,7 +154,7 @@ def link_response():
         print(result)
         print(result.json())
         raise RuntimeError(
-            "There was an error while posting the link response to chat."
+            "There was an error while posting the text response to chat."
         )
 
 
