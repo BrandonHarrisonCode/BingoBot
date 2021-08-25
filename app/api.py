@@ -3,6 +3,7 @@ import random
 import os
 from datetime import datetime
 import json
+import textwrap
 from pytz import timezone
 import requests
 
@@ -16,12 +17,13 @@ CORS(api)
 API_KEY = os.environ["API_KEY"]
 BOT_ID = os.environ["BOT_ID"].strip()
 CALL_PHRASE = os.environ.get("CALL_PHRASE", "Bingo me")
-USER_LINK_ID = str(os.environ.get("USER_LINK_ID", "-1")).strip()
-LINK_CALLWORDS = os.environ.get("LINK_CALLWORDS", "send")
-LINK_RESPONSE_TEXT = os.environ.get("LINK_RESPONSE_TEXT", "").split(";")
 GROUP_CALL_DAY_OF_THE_WEEK = int(os.environ.get("GROUP_CALL_DAY_OF_THE_WEEK", 2))
 KEEPERS_CALL_PHRASE = os.environ.get("KEEPERS_CALL_PHRASE", "Keepers?")
 KEEPERS_RESPONSE = os.environ.get("KEEPERS_RESPONSE", "Keeper rules.")
+LINK_CALLWORDS = os.environ.get("LINK_CALLWORDS", "send")
+LINK_RESPONSE_TEXT = os.environ.get("LINK_RESPONSE_TEXT", "").split(";")
+TEXT_LIMIT = 1000  # Text limit for messages
+USER_LINK_ID = str(os.environ.get("USER_LINK_ID", "-1")).strip()
 
 options = webdriver.ChromeOptions()
 options.headless = True
@@ -140,8 +142,30 @@ def upload_image_to_groupme(screenshot_data):
 
 
 def text_response(text):
+    """Creates a text reponse potentially split up over several messages"""
+    # Ensure that no individual line is over the text limit
+    text_lines = []
+    wrapper = textwrap.TextWrapper(width=TEXT_LIMIT)
+    for line in text.splitlines():
+        word_list = wrapper.wrap(text=line)
+        text_lines.extend(word_list)
+
+    message_length = 0
+    message = []
+    for line in text_lines:
+        if message_length + len(line) <= TEXT_LIMIT:
+            message.append(line)
+            message_length += len(line) + len("\n")
+        else:
+            send_message("\n".join(message))
+            message_length = 0
+            message = []
+
+
+def send_message(text):
     """Sends a text message to the group chat"""
     chat_url = "https://api.groupme.com/v3/bots/post"
+
     data = json.dumps(
         {
             "bot_id": BOT_ID,
