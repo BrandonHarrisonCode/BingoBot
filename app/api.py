@@ -161,8 +161,8 @@ def text_response(text):
         else:
             send_message("\n".join(message))
             time.sleep(MESSAGE_RATE_LIMIT_TIME)
-            message_length = 0
-            message = []
+            message = [line]
+            message_length = len(line) + len("\n")
     if message:
         send_message("\n".join(message))
 
