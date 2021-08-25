@@ -1,5 +1,6 @@
 """A GroupMe bot to autogenerate bingo cards"""
 import random
+import time
 import os
 from datetime import datetime
 import json
@@ -22,6 +23,7 @@ KEEPERS_CALL_PHRASE = os.environ.get("KEEPERS_CALL_PHRASE", "Keepers?")
 KEEPERS_RESPONSE = os.environ.get("KEEPERS_RESPONSE", "Keeper rules.")
 LINK_CALLWORDS = os.environ.get("LINK_CALLWORDS", "send")
 LINK_RESPONSE_TEXT = os.environ.get("LINK_RESPONSE_TEXT", "").split(";")
+MESSAGE_RATE_LIMIT_TIME = 3  # Time limit between sending messages
 TEXT_LIMIT = 1000  # Text limit for messages
 USER_LINK_ID = str(os.environ.get("USER_LINK_ID", "-1")).strip()
 
@@ -104,7 +106,7 @@ def do_keeper_request():
     text = KEEPERS_RESPONSE
     try:
         text_response(text)
-        return "Success: link!"
+        return "Success: keepers!"
     except RuntimeError as exception:
         return str(exception)
 
@@ -158,8 +160,11 @@ def text_response(text):
             message_length += len(line) + len("\n")
         else:
             send_message("\n".join(message))
+            time.sleep(MESSAGE_RATE_LIMIT_TIME)
             message_length = 0
             message = []
+    if message:
+        send_message("\n".join(message))
 
 
 def send_message(text):
@@ -174,6 +179,7 @@ def send_message(text):
     )
     print(data)
     result = requests.post(chat_url, data=data)
+    print(result)
     if not result.ok:
         print(result)
         print(result.json())
