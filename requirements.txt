@@ -1,5 +1,5 @@
 astroid==2.7.2
-certifi==2021.5.30
+certifi==2022.12.7
 chardet==4.0.0
 charset-normalizer==2.0.4
 chromedriver==2.24.1
